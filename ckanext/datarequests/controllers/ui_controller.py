@@ -154,7 +154,7 @@ class DataRequestsUI(base.BaseController):
             data_dict = collections.defaultdict(str, request.POST.items())
 
             if action == constants.DATAREQUEST_CREATE:
-                data_dict['id'] = data_dict.pop('id', None)
+                data_dict.pop('id', None)
 
             try:
                 result = tk.get_action(action)(context, data_dict)
@@ -250,7 +250,7 @@ class DataRequestsUI(base.BaseController):
             log.warn(e)
             tk.abort(404, tk._('Data Request %s not found') % id)
         except tk.NotAuthorized as e:
-            log.warn(e) 
+            log.warn(e)
             tk.abort(403, tk._('You are not authorized to delete the Data Request %s'
                                % id))
 
