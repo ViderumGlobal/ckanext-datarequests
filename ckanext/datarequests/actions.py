@@ -86,20 +86,28 @@ def _dictize_datarequest(datarequest):
         'accepted_dataset': None
     }
 
+
+
     if datarequest.organization_id:
         data_dict['organization'] = _get_organization(datarequest.organization_id)
 
     if datarequest.accepted_dataset_id:
         data_dict['accepted_dataset'] = _get_package(datarequest.accepted_dataset_id)
 
+    if datarequest.extras:
+        data_dict.update(datarequest.extras)
+
     return data_dict
 
 
 def _undictize_datarequest_basic(data_request, data_dict):
-    data_request.title = data_dict['title']
-    data_request.description = data_dict['description']
-    organization = data_dict['organization_id']
+    params = data_dict.copy()
+    data_request.title = params.pop('title', None)
+    data_request.description = params.pop('description', None)
+    organization = params.pop('organization_id', None)
     data_request.organization_id = organization if organization else None
+
+    data_request.extras = params
 
 
 def _dictize_comment(comment):

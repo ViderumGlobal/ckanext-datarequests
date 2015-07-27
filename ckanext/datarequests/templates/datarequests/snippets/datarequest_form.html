@@ -21,6 +21,9 @@ then itself be extended to add/remove blocks of functionality. #}
     {{ form.markdown('description', id='field-description', label=_('Description'), placeholder=_('eg. Data Request description'), value=description, error=errors['Description']) }}
   {% endblock %}
 
+  {% block additional_fields %}
+  {% endblock %}
+
   <div class="control-group">
     <label for="field-organizations" class="control-label">{{ _('Organization') }}</label>
     <div class="controls">

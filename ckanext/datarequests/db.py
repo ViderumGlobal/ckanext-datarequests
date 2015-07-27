@@ -75,7 +75,8 @@ def init_db(model):
             sa.Column('open_time', sa.types.DateTime, primary_key=False, default=None),
             sa.Column('accepted_dataset_id', sa.types.UnicodeText, primary_key=False, default=None),
             sa.Column('close_time', sa.types.DateTime, primary_key=False, default=None),
-            sa.Column('closed', sa.types.Boolean, primary_key=False, default=False)
+            sa.Column('closed', sa.types.Boolean, primary_key=False, default=False),
+            sa.Column('extras', model.types.JsonDictType),
         )
 
         # Create the table only if it does not exist

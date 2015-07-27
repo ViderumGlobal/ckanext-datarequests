@@ -24,6 +24,7 @@ import ckan.model as model
 import ckan.plugins as plugins
 import ckan.lib.helpers as helpers
 import ckanext.datarequests.constants as constants
+import collections
 import functools
 import re
 
@@ -150,13 +151,10 @@ class DataRequestsUI(base.BaseController):
     def _process_post(self, action, context):
         # If the user has submitted the form, the data request must be created
         if request.POST:
-            data_dict = {}
-            data_dict['title'] = request.POST.get('title', '')
-            data_dict['description'] = request.POST.get('description', '')
-            data_dict['organization_id'] = request.POST.get('organization_id', '')
+            data_dict = collections.defaultdict(str, request.POST.items())
 
-            if action == constants.DATAREQUEST_UPDATE:
-                data_dict['id'] = request.POST.get('id', '')
+            if action == constants.DATAREQUEST_CREATE:
+                data_dict['id'] = data_dict.pop('id', None)
 
             try:
                 result = tk.get_action(action)(context, data_dict)

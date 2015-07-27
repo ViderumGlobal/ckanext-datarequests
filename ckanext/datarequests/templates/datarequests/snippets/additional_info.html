@@ -19,6 +19,8 @@
           <th scope="row" class="dataset-label">{{ _('Closed') }}</th>
           <td class="dataset-details" title="{{ datarequest.close_time }}">{{ h.time_ago_from_timestamp(datarequest.close_time) if datarequest.close_time else _('Not closed yet') }}</td>
         </tr>
+        {% block additional_fields %}
+        {% endblock %}
         {% if datarequest.closed %}
           <tr>
             <th scope="row" class="dataset-label">{{ _('Accepted Dataset') }}</th>
