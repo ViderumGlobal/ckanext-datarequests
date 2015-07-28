@@ -19,6 +19,7 @@
 
 import logging
 
+import ckan.authz as authz
 import ckan.lib.base as base
 import ckan.model as model
 import ckan.plugins as plugins
@@ -110,6 +111,14 @@ class DataRequestsUI(base.BaseController):
             if state:
                 data_dict['closed'] = True if state == 'closed' else False
 
+            is_sysadmin = authz.is_sysadmin(c.user)
+            if is_sysadmin:
+                visibility = request.GET.get('visibility', None)
+                if visibility:
+                    data_dict['visibility'] = visibility
+            else:
+                data_dict['visibility'] = constants.DataRequestState.visible.name
+
             if organization_id:
                 data_dict['organization_id'] = organization_id
 
@@ -131,6 +140,8 @@ class DataRequestsUI(base.BaseController):
             c.facet_titles = {
                 'state': tk._('State'),
             }
+            if is_sysadmin:
+                c.facet_titles['visibility'] = tk._('Visibility')
 
             # Organization facet cannot be shown when the user is viewing an org
             if include_organization_facet is True:

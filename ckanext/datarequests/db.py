@@ -77,6 +77,9 @@ def init_db(model):
             sa.Column('close_time', sa.types.DateTime, primary_key=False, default=None),
             sa.Column('closed', sa.types.Boolean, primary_key=False, default=False),
             sa.Column('extras', model.types.JsonDictType),
+            sa.Column('visibility',
+                      sa.types.Integer,
+                      default=constants.DataRequestState.hidden.value),
         )
 
         # Create the table only if it does not exist

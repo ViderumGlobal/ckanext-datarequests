@@ -39,6 +39,10 @@ then itself be extended to add/remove blocks of functionality. #}
     </div>
   </div>
 
+  {% if h.check_access('sysadmin') %}
+    {{ form.select('visibility', label=_('Visibility'), options=[{'name':'hidden', 'value': 'hidden'},{'name': 'visible', 'value': 'visible'}], selected=data.visibility, error=errors.hidden) }}
+  {% endif %}
+
   {% block form_actions %}
     <div class="form-actions">
       {% block delete_button %}
