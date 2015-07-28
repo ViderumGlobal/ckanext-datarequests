@@ -190,7 +190,10 @@ def datarequest_create(context, data_dict):
     _undictize_datarequest_basic(data_req, data_dict)
     data_req.user_id = context['auth_user_obj'].id
     data_req.open_time = datetime.datetime.now()
-    data_req.visibility = constants.DataRequestState.hidden.value
+
+    user = context['user']
+    if not authz.is_sysadmin(user):
+        data_req.visibility = constants.DataRequestState.hidden.value
 
     session.add(data_req)
     session.commit()
