@@ -24,6 +24,7 @@ then itself be extended to add/remove blocks of functionality. #}
   {% block additional_fields %}
   {% endblock %}
 
+{% block offering_organization %}
   <div class="control-group">
     <label for="field-organizations" class="control-label">{{ _('Organization') }}</label>
     <div class="controls">
@@ -38,6 +39,7 @@ then itself be extended to add/remove blocks of functionality. #}
       </select>
     </div>
   </div>
+{% endblock %}
 
   {% if h.check_access('sysadmin') %}
     {{ form.select('visibility', label=_('Visibility'), options=[{'name':'hidden', 'value': 'hidden'},{'name': 'visible', 'value': 'visible'}], selected=data.visibility, error=errors.hidden) }}
