@@ -18,7 +18,7 @@ then itself be extended to add/remove blocks of functionality. #}
   {% endblock %}
 
   {% block offering_description %}
-    {{ form.markdown('description', id='field-description', label=_('Description'), placeholder=_('eg. Data Request description'), value=description, error=errors['Description']) }}
+    {{ form.markdown('description', id='field-description', label=_('Description'), placeholder=_('eg. Data Request description'), value=description, error=errors['Description'], is_required=true) }}
   {% endblock %}
 
   {% block additional_fields %}
