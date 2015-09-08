@@ -41,6 +41,9 @@ def validate_datarequest(context, request_data):
             errors['Title'] = ['That title is already in use']
 
     # Check description
+    if not request_data['description']:
+        errors['Description'] = [tk._('Description cannot be empty')]
+
     if len(request_data['description']) > constants.DESCRIPTION_MAX_LENGTH:
         errors['Description'] = [tk._('Description must be a maximum of %d characters long') % constants.DESCRIPTION_MAX_LENGTH]
 
