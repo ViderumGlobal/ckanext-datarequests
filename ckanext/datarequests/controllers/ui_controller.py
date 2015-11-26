@@ -19,6 +19,7 @@
 
 import logging
 
+import ckan.authz as authz
 import ckan.lib.base as base
 import ckan.model as model
 import ckan.plugins as plugins
@@ -110,6 +111,14 @@ class DataRequestsUI(base.BaseController):
             if state:
                 data_dict['closed'] = True if state == 'closed' else False
 
+            is_sysadmin = authz.is_sysadmin(c.user)
+            if is_sysadmin:
+                visibility = request.GET.get('visibility', None)
+                if visibility:
+                    data_dict['visibility'] = visibility
+            else:
+                data_dict['visibility'] = constants.DataRequestState.visible.name
+
             if organization_id:
                 data_dict['organization_id'] = organization_id
 
@@ -131,6 +140,8 @@ class DataRequestsUI(base.BaseController):
             c.facet_titles = {
                 'state': tk._('State'),
             }
+            if is_sysadmin:
+                c.facet_titles['visibility'] = tk._('Visibility')
 
             # Organization facet cannot be shown when the user is viewing an org
             if include_organization_facet is True:
@@ -278,7 +289,7 @@ class DataRequestsUI(base.BaseController):
             # belongs to the organization are shown)
             organization_id = c.datarequest.get('organization_id', '')
             if organization_id:
-                base_datasets = tk.get_action('organization_show')({'ignore_auth': True}, {'id': organization_id})['packages']
+                base_datasets = tk.get_action('organization_show')({'ignore_auth': True}, {'id': organization_id, 'include_datasets': True})['packages']
             else:
                 # FIXME: At this time, only the 500 last modified/created datasets are retrieved.
                 # We assume that a user will close their data request with a recently added or modified dataset

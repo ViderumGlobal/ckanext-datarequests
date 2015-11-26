@@ -18,6 +18,7 @@
 # along with CKAN Data Requests Extension. If not, see <http://www.gnu.org/licenses/>.
 
 
+from ckan import authz
 import ckan.plugins as plugins
 import constants
 import datetime
@@ -62,6 +63,22 @@ def _get_package(package_id):
         log.warn(e)
 
 
+def _get_visibility_from_name(visibility):
+    try:
+        return constants.DataRequestState[visibility]
+    except ValueError, e:
+        log.warn(e)
+        return constants.DataRequestState.hidden
+
+
+def _get_visibility_from_code(visibility_code):
+    try:
+        return constants.DataRequestState(visibility_code)
+    except ValueError, e:
+        log.warn(e)
+        return constants.DataRequestState.hidden
+
+
 def _dictize_datarequest(datarequest):
     # Transform time
     open_time = str(datarequest.open_time)
@@ -83,10 +100,9 @@ def _dictize_datarequest(datarequest):
         'closed': datarequest.closed,
         'user': _get_user(datarequest.user_id),
         'organization': None,
-        'accepted_dataset': None
+        'accepted_dataset': None,
+        'visibility': _get_visibility_from_code(datarequest.visibility).name,
     }
-
-
 
     if datarequest.organization_id:
         data_dict['organization'] = _get_organization(datarequest.organization_id)
@@ -106,6 +122,11 @@ def _undictize_datarequest_basic(data_request, data_dict):
     data_request.description = params.pop('description', None)
     organization = params.pop('organization_id', None)
     data_request.organization_id = organization if organization else None
+
+    visibility_code = data_dict.pop('visibility', None)
+    if visibility_code:
+        visibility = _get_visibility_from_name(visibility_code)
+        data_request.visibility = visibility.value
 
     data_request.extras = params
 
@@ -169,6 +190,10 @@ def datarequest_create(context, data_dict):
     _undictize_datarequest_basic(data_req, data_dict)
     data_req.user_id = context['auth_user_obj'].id
     data_req.open_time = datetime.datetime.now()
+
+    user = context['user']
+    if not authz.is_sysadmin(user):
+        data_req.visibility = constants.DataRequestState.hidden.value
 
     session.add(data_req)
     session.commit()
@@ -256,6 +281,10 @@ def datarequest_update(context, data_dict):
 
     # Check access
     tk.check_access(constants.DATAREQUEST_UPDATE, context, data_dict)
+    user = context['user']
+    if not authz.is_sysadmin(user):
+        # only sysadmins can update visiblity
+        data_dict.pop('visibility', None)
 
     # Get the initial data
     result = db.DataRequest.get(id=datarequest_id)
@@ -342,6 +371,10 @@ def datarequest_index(context, data_dict):
     if closed is not None:
         params['closed'] = closed
 
+    visibility_text = data_dict.get('visibility', None)
+    if visibility_text:
+        params['visibility'] = _get_visibility_from_name(visibility_text).value
+
     # Call the function
     db_datarequests = db.DataRequest.get_ordered_by_date(**params)
 
@@ -357,6 +390,10 @@ def datarequest_index(context, data_dict):
     CLOSED = 'Closed'
     OPEN = 'Open'
     no_processed_state_facet = {CLOSED:0 , OPEN: 0}
+    no_processed_visibility_facet = {
+        constants.DataRequestState.hidden: 0,
+        constants.DataRequestState.visible: 0.
+    }
     for data_req in db_datarequests:
         if data_req.organization_id:
             # Facets
@@ -366,6 +403,9 @@ def datarequest_index(context, data_dict):
                 no_processed_organization_facet[data_req.organization_id] = 1
 
         no_processed_state_facet[CLOSED if data_req.closed else OPEN] +=1
+
+        visibility = _get_visibility_from_code(data_req.visibility)
+        no_processed_visibility_facet[visibility] += 1
 
     # Format facets
     organization_facet = []
@@ -401,6 +441,14 @@ def datarequest_index(context, data_dict):
 
     if state_facet:
         result['facets']['state'] = {'items': state_facet}
+
+    visibility_facet = [{
+        'name': facet.name,
+        'display_name': facet.name.title(),
+        'count': count
+    } for facet, count in no_processed_visibility_facet.items() if count]
+
+    result['facets']['visibility'] = {'items': visibility_facet}
 
     return result
 
