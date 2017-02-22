@@ -43,7 +43,15 @@
             </td>
           </tr>
         {% endif %}
+
+        {% if datarequest.status %}
+          <tr>
+              <th scope="row" class="dataset-label">{{ _('Status') }}</th>
+              <td class="dataset-details">{{ datarequest.status }}</td>
+          </tr>
+        {% endif %}
       {% endblock %}
+
     </tbody>
   </table>
 </section>

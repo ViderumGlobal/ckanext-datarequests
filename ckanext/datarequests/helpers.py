@@ -19,6 +19,8 @@
 
 import ckan.model as model
 import ckan.plugins.toolkit as tk
+from pylons import config
+
 import db
 
 
@@ -46,3 +48,9 @@ def get_open_datarequests_badge(show_badge):
                                  {'comments_count': get_open_datarequests_number()})
     else:
         return ''
+
+
+def get_datarequest_statuses():
+    statuses = config.get('ckanext.datarequest.statuses', '')
+    statuses = statuses.split(',')
+    return [{'name': status, 'value': status} for status in statuses]

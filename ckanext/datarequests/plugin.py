@@ -17,15 +17,16 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with CKAN Data Requests Extension. If not, see <http://www.gnu.org/licenses/>.
 
+from functools import partial
+
 import ckan.plugins as p
 import ckan.plugins.toolkit as tk
-import auth
+from pylons import config
+
 import actions
+import auth
 import constants
 import helpers
-
-from functools import partial
-from pylons import config
 
 
 def get_config_bool_value(config_name, default_value=False):
@@ -177,5 +178,6 @@ class DataRequestsPlugin(p.SingletonPlugin):
             'get_comments_number': helpers.get_comments_number,
             'get_comments_badge': helpers.get_comments_badge,
             'get_open_datarequests_number': helpers.get_open_datarequests_number,
-            'get_open_datarequests_badge': partial(helpers.get_open_datarequests_badge, self._show_datarequests_badge)
+            'get_open_datarequests_badge': partial(helpers.get_open_datarequests_badge, self._show_datarequests_badge),
+            'get_datarequest_statuses': helpers.get_datarequest_statuses
         }

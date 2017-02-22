@@ -43,10 +43,14 @@ then itself be extended to add/remove blocks of functionality. #}
 
   {% if h.check_access('sysadmin') %}
     {{ form.select('visibility', label=_('Visibility'), options=[{'name':'hidden', 'value': 'hidden'},{'name': 'visible', 'value': 'visible'}], selected=data.visibility, error=errors.hidden) }}
+
+    {{ form.select('status', label=_('Status'), options=h.get_datarequest_statuses(), selected=data.status, error=errors.hidden) }}
+
   {% else %}
     <div class="alert alert-warning">
       {% trans %}Your data request will not be visible until a site administrator reviews it.{% endtrans %}
     </div>
+
   {% endif %}
 
   {% block form_actions %}

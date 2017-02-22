@@ -18,13 +18,15 @@
 # along with CKAN Data Requests Extension. If not, see <http://www.gnu.org/licenses/>.
 
 
-from ckan import authz
-import ckan.plugins as plugins
-import constants
-import datetime
 import cgi
-import db
+import datetime
 import logging
+
+import ckan.plugins as plugins
+from ckan import authz
+
+import constants
+import db
 import validator
 
 c = plugins.toolkit.c
@@ -102,6 +104,7 @@ def _dictize_datarequest(datarequest):
         'organization': None,
         'accepted_dataset': None,
         'visibility': _get_visibility_from_code(datarequest.visibility).name,
+        'status': datarequest.status
     }
 
     if datarequest.organization_id:
@@ -127,6 +130,8 @@ def _undictize_datarequest_basic(data_request, data_dict):
     if visibility_code:
         visibility = _get_visibility_from_name(visibility_code)
         data_request.visibility = visibility.value
+
+    data_request.status = params.pop('status', 'Open')
 
     data_request.extras = params
 
@@ -281,10 +286,12 @@ def datarequest_update(context, data_dict):
 
     # Check access
     tk.check_access(constants.DATAREQUEST_UPDATE, context, data_dict)
+
     user = context['user']
     if not authz.is_sysadmin(user):
-        # only sysadmins can update visiblity
+        # only sysadmins can update visiblity and status
         data_dict.pop('visibility', None)
+        data_dict.pop('status', None)
 
     # Get the initial data
     result = db.DataRequest.get(id=datarequest_id)
@@ -540,6 +547,7 @@ def datarequest_close(context, data_dict):
         raise tk.ValidationError(['This Data Request is already closed'])
 
     data_req.closed = True
+    data_req.status = u'Closed'
     data_req.accepted_dataset_id = data_dict.get('accepted_dataset_id', None)
     data_req.close_time = datetime.datetime.now()
 
