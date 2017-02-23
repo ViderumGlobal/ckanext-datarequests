@@ -51,6 +51,6 @@ def get_open_datarequests_badge(show_badge):
 
 
 def get_datarequest_statuses():
-    statuses = config.get('ckanext.datarequest.statuses', '')
+    statuses = config.get('ckanext.datarequest.statuses', 'Open,In progress,Data holder contacted,Scheduled for release,Released,Cannot be released,Not held by public sector')
     statuses = statuses.split(',')
     return [{'name': status, 'value': status} for status in statuses]
