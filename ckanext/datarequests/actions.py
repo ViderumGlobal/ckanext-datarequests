@@ -381,7 +381,7 @@ def datarequest_index(context, data_dict):
             organization = organization_show({'ignore_auth': True}, {'id': organization_id})
             organization_facet.append({
                 'name': organization.get('name'),
-                'display_name': organization.get('display_name'),
+                'display_name': organization.get('title'),
                 'count': no_processed_organization_facet[organization_id]
             })
         except:
