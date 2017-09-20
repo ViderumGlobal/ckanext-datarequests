@@ -39,17 +39,39 @@
 {% endblock %}
 
 {% block primary_content_inner %}
-    {% if c.datarequest.closed %}
-      <span class="uppercase label label-closed pull-right">
-        <i class="icon-lock"></i>
-        {{ _('Closed') }}
-      </span>
-    {% else %}
-      <span class="uppercase label label-open pull-right">
-        <i class="icon-unlock"></i>
-        {{ _('Open') }}
-      </span>
-    {% endif %}
+{% if c.datarequest.status == 'Open' %}
+<span class="uppercase label label-open pull-right">
+  <i class="icon-unlock"></i>  {{ c.datarequest.status }}
+</span>
+{% elif c.datarequest.status == 'In progress' %}
+<span class="uppercase label label-in-progress pull-right">
+  <i class="icon-unlock"></i>  {{ c.datarequest.status }}
+</span>
+{% elif c.datarequest.status == 'Data holder contacted' %}
+<span class="uppercase label label-contacted pull-right">
+  <i class="icon-unlock"></i>  {{ c.datarequest.status }}
+</span>
+{% elif c.datarequest.status == 'Scheduled for release' %}
+<span class="uppercase label label-scheduled pull-right">
+  <i class="icon-unlock"></i>  {{ c.datarequest.status }}
+</span>
+{% elif c.datarequest.status == 'Released' %}
+<span class="uppercase label label-released pull-right">
+  <i class="icon-lock"></i>  {{ c.datarequest.status }}
+</span>
+{% elif c.datarequest.status == 'Cannot be released' %}
+<span class="uppercase label label-cannot-release pull-right">
+  <i class="icon-lock"></i>  {{ c.datarequest.status }}
+</span>
+{% elif c.datarequest.status == 'Not held by public sector' %}
+<span class="uppercase label label-not-public pull-right">
+  <i class="icon-lock"></i>  {{ c.datarequest.status }}
+</span>
+{% elif c.datarequest.status == 'Closed' %}
+<span class="uppercase label label-closed pull-right">
+  <i class="icon-lock"></i>  {{ c.datarequest.status }}
+</span>
+{% endif %}
 
   <h1 class="{% block page_heading_class %}page-heading{% endblock %}">{% block page_heading %}{{ c.datarequest.get('title') }}{% endblock %}</h1>
 
