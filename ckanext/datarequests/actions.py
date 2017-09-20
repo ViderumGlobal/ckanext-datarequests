@@ -17,14 +17,13 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with CKAN Data Requests Extension. If not, see <http://www.gnu.org/licenses/>.
 
-
 import cgi
 import datetime
 import logging
 
 import ckan.plugins as plugins
 from ckan import authz
-
+from ckan.common import request
 import constants
 import db
 import validator
@@ -218,7 +217,7 @@ def datarequest_show(context, data_dict):
     :param id: The id of the data request to be shown
     :type id: string
 
-    :returns: A dict with the data request (id, user_id, title, description, 
+    :returns: A dict with the data request (id, user_id, title, description,
         organization_id, open_time, accepted_dataset, close_time, closed)
     :rtype: dict
     '''
@@ -269,7 +268,7 @@ def datarequest_update(context, data_dict):
         organization.
     :type organization_id: string
 
-    :returns: A dict with the data request (id, user_id, title, description, 
+    :returns: A dict with the data request (id, user_id, title, description,
         organization_id, open_time, accepted_dataset, close_time, closed)
     :rtype: dict
     '''
@@ -318,7 +317,7 @@ def datarequest_update(context, data_dict):
 def datarequest_index(context, data_dict):
     '''
     Returns a list with the existing data requests. Rights access will be checked
-    before returning the results. If the user is not allowed, a NotAuthorized 
+    before returning the results. If the user is not allowed, a NotAuthorized
     exception will be risen.
 
     :param organization_id: This parameter is optional and allows users
@@ -382,7 +381,6 @@ def datarequest_index(context, data_dict):
     if visibility_text:
         params['visibility'] = _get_visibility_from_name(visibility_text).value
 
-    # Call the function
     db_datarequests = db.DataRequest.get_ordered_by_date(**params)
 
     # Dictize the results
@@ -396,7 +394,14 @@ def datarequest_index(context, data_dict):
     no_processed_organization_facet = {}
     CLOSED = 'Closed'
     OPEN = 'Open'
-    no_processed_state_facet = {CLOSED:0 , OPEN: 0}
+    IN_PROGRESS = 'In progress'
+    DATA_HOLDER_CONTRACTED = 'Data holder contacted'
+    SCHEDULED_FOR_RELEASE = 'Scheduled for release'
+    RELEASED = 'Released'
+    CANNOT_BE_RELEASED = 'Cannot be released'
+    NOT_HELD_BY_PUBLIC_SECTOR = 'Not held by public sector'
+    no_processed_state_facet = {CLOSED: 0, OPEN: 0, IN_PROGRESS: 0, DATA_HOLDER_CONTRACTED: 0,
+                                SCHEDULED_FOR_RELEASE: 0, RELEASED: 0, CANNOT_BE_RELEASED: 0, NOT_HELD_BY_PUBLIC_SECTOR: 0}
     no_processed_visibility_facet = {
         constants.DataRequestState.hidden: 0,
         constants.DataRequestState.visible: 0.
@@ -409,7 +414,7 @@ def datarequest_index(context, data_dict):
             else:
                 no_processed_organization_facet[data_req.organization_id] = 1
 
-        no_processed_state_facet[CLOSED if data_req.closed else OPEN] +=1
+        no_processed_state_facet[data_req.status] += 1
 
         visibility = _get_visibility_from_code(data_req.visibility)
         no_processed_visibility_facet[visibility] += 1
@@ -431,7 +436,7 @@ def datarequest_index(context, data_dict):
     for state in no_processed_state_facet:
         if no_processed_state_facet[state]:
             state_facet.append({
-                'name': state.lower(),
+                'name': state,
                 'display_name': state,
                 'count': no_processed_state_facet[state]
             })
@@ -441,14 +446,12 @@ def datarequest_index(context, data_dict):
         'facets': {},
         'result': datarequests
     }
-
     # Facets can only be included if they contain something
     if organization_facet:
         result['facets']['organization'] = {'items': organization_facet}
 
     if state_facet:
         result['facets']['state'] = {'items': state_facet}
-
     visibility_facet = [{
         'name': facet.name,
         'display_name': facet.name.title(),
@@ -456,6 +459,12 @@ def datarequest_index(context, data_dict):
     } for facet, count in no_processed_visibility_facet.items() if count]
 
     result['facets']['visibility'] = {'items': visibility_facet}
+
+    status_filter = request.params.values()
+
+    if status_filter:
+        result['result'] = [res for res in result['result']
+                            if res['status'] in status_filter]
 
     return result
 
@@ -469,7 +478,7 @@ def datarequest_delete(context, data_dict):
     :param id: The id of the data request to be updated
     :type id: string
 
-    :returns: A dict with the data request (id, user_id, title, description, 
+    :returns: A dict with the data request (id, user_id, title, description,
         organization_id, open_time, accepted_dataset, close_time, closed)
     :rtype: dict
     '''
