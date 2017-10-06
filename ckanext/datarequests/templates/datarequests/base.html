@@ -14,14 +14,19 @@
 {% block secondary_content %}
 
   <section class="module module-narrow module-shallow">
-    <h2 class="module-heading"><i class="icon-info-sign"></i>{% trans %}Data Request{% endtrans %}</h2>
+    <h2 class="module-heading"><i class="fa fa-info-circle"></i>{% trans %}Data Request{% endtrans %}</h2>
     <div class="module-content">
       <p>
-        {% trans %}Data Requests allow users to ask for data that is not published in the platform yet. If you want some specific data and you are not able to find it among all the published datasets, you can create a new data request specifying the data than you want to get.{% endtrans %}
+        As part of our commitment to open data publication, {{ g.site_name }} is interested in public requests for data.
+        These will be considered by the open data team, who will aim to respond after consulting the relevant team with
+        either the requested dataset, or with an explanation for why the dataset could not be cleared for publication.
+        Please note that this will not be classed as a request for information under the Freedom of Information (Scotland)
+        Act 2002 or the Environmental Information (Scotland) Regulations 2004, information about which can be found on
+        our <a href="http://www.pkc.gov.uk/foi">website</a>. See our <a href="{{ h.url_for('pages_show', page='/privacy') }}">data policy</a> for further details.
       </p>
       {% block secondary_content_additional_info %}
       {% endblock %}
     </div>
   </section>
-  
+
 {% endblock %}
