@@ -382,7 +382,6 @@ def datarequest_index(context, data_dict):
         params['visibility'] = _get_visibility_from_name(visibility_text).value
 
     db_datarequests = db.DataRequest.get_ordered_by_date(**params)
-
     # Dictize the results
     offset = data_dict.get('offset', 0)
     limit = data_dict.get('limit', constants.DATAREQUESTS_PER_PAGE)
@@ -459,12 +458,6 @@ def datarequest_index(context, data_dict):
     } for facet, count in no_processed_visibility_facet.items() if count]
 
     result['facets']['visibility'] = {'items': visibility_facet}
-
-    status_filter = request.params.values()
-
-    if status_filter:
-        result['result'] = [res for res in result['result']
-                            if res['status'] in status_filter]
 
     return result
 

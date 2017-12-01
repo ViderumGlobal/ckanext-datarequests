@@ -127,8 +127,15 @@ class DataRequestsUI(base.BaseController):
 
             tk.check_access(constants.DATAREQUEST_INDEX, context, data_dict)
             datarequests_list = tk.get_action(constants.DATAREQUEST_INDEX)(context, data_dict)
-            c.datarequest_count = datarequests_list['count']
+
+            status_filter = [s[1] for s in request.GET.items() if s[0] == 'state']
+
+            if status_filter:
+                datarequests_list['result'] = [res for res in datarequests_list['result']
+                                            if res['status'] in status_filter]
+
             c.datarequests = datarequests_list['result']
+            c.datarequest_count = datarequests_list['count']
             c.search_facets = datarequests_list['facets']
             c.page = helpers.Page(
                 collection=datarequests_list['result'],
@@ -212,7 +219,6 @@ class DataRequestsUI(base.BaseController):
         try:
             tk.check_access(constants.DATAREQUEST_SHOW, context, data_dict)
             c.datarequest = tk.get_action(constants.DATAREQUEST_SHOW)(context, data_dict)
-
             context_ignore_auth = context.copy()
             context_ignore_auth['ignore_auth'] = True
 
