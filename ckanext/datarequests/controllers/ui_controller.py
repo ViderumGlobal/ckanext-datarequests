@@ -30,6 +30,7 @@ import functools
 import re
 
 from ckan.common import request
+from ckan.plugins import toolkit
 from urllib import urlencode
 
 
@@ -96,8 +97,26 @@ class DataRequestsUI(base.BaseController):
     def _show_index(self, user_id, organization_id, include_organization_facet, url_func, file_to_render):
 
         def pager_url(q=None, page=None):
+
+            def update_in_alist(alist, key, value):
+                return [(k, v) if (k != key) else (key, value) for (k, v) in alist]
+
+            def update_in_alist_inplace(alist, key, value):
+                alist[:] = update_in_alist(alist, key, value)
+
             params = list()
-            params.append(('page', page))
+            params.extend(toolkit.request.params.items())
+
+            if params:
+                for i in range(len(params)):
+                    if 'page' in params[i]:
+                        params = update_in_alist(params, 'page', page)
+                    else:
+                        params.append(('page', page))
+            else:
+                params.append(('page', page))
+
+            params = list(set(params))
             return url_func(params)
 
         try:
@@ -127,16 +146,14 @@ class DataRequestsUI(base.BaseController):
 
             tk.check_access(constants.DATAREQUEST_INDEX, context, data_dict)
             datarequests_list = tk.get_action(constants.DATAREQUEST_INDEX)(context, data_dict)
-
+            c.datarequest_count = datarequests_list['count']
             status_filter = [s[1] for s in request.GET.items() if s[0] == 'state']
-
             if status_filter:
-                datarequests_list['result'] = [res for res in datarequests_list['result']
-                                            if res['status'] in status_filter]
+                datarequests_list['result'] = [res for res in datarequests_list['result'] if res['status'] in status_filter]
 
             c.datarequests = datarequests_list['result']
-            c.datarequest_count = datarequests_list['count']
             c.search_facets = datarequests_list['facets']
+
             c.page = helpers.Page(
                 collection=datarequests_list['result'],
                 page=page,
