@@ -373,21 +373,15 @@ def datarequest_index(context, data_dict):
         params['user_id'] = user_id
 
     # Filter by state
-    closed = data_dict.get('closed', None)
-    if closed is not None:
-        params['closed'] = closed
+    # closed = data_dict.get('closed', None)
+    # if closed is not None:
+    #     params['closed'] = closed
 
     visibility_text = data_dict.get('visibility', None)
     if visibility_text:
         params['visibility'] = _get_visibility_from_name(visibility_text).value
 
     db_datarequests = db.DataRequest.get_ordered_by_date(**params)
-    # Dictize the results
-    offset = data_dict.get('offset', 0)
-    limit = data_dict.get('limit', constants.DATAREQUESTS_PER_PAGE)
-    datarequests = []
-    for data_req in db_datarequests[offset:offset + limit]:
-        datarequests.append(_dictize_datarequest(data_req))
 
     # Facets
     no_processed_organization_facet = {}
@@ -405,6 +399,9 @@ def datarequest_index(context, data_dict):
         constants.DataRequestState.hidden: 0,
         constants.DataRequestState.visible: 0.
     }
+
+    status_filter = [s[1] for s in request.GET.items() if s[0] == 'state']
+
     for data_req in db_datarequests:
         if data_req.organization_id:
             # Facets
@@ -413,10 +410,13 @@ def datarequest_index(context, data_dict):
             else:
                 no_processed_organization_facet[data_req.organization_id] = 1
 
-        no_processed_state_facet[data_req.status] += 1
-
+        if data_req.closed is False:
+            no_processed_state_facet[data_req.status] += 1
+        if data_req.closed is True:
+            no_processed_state_facet['Closed'] += 1
         visibility = _get_visibility_from_code(data_req.visibility)
         no_processed_visibility_facet[visibility] += 1
+
 
     # Format facets
     organization_facet = []
@@ -439,9 +439,26 @@ def datarequest_index(context, data_dict):
                 'display_name': state,
                 'count': no_processed_state_facet[state]
             })
+    # Dictize the results
+    offset = data_dict.get('offset', 0)
+    limit = data_dict.get('limit', constants.DATAREQUESTS_PER_PAGE)
+    datarequests = []
+    filtered_datarequests = []
+    if status_filter:
+        for data_req in db_datarequests:
+            if data_req.status in status_filter:
+                filtered_datarequests.append(_dictize_datarequest(data_req))
+        for data_request in filtered_datarequests[offset:offset + limit]:
+            datarequests.append(data_request)
+        data_req_count = len(filtered_datarequests)
+    else:
+        for data_req in db_datarequests[offset:offset + limit]:
+            datarequests.append(_dictize_datarequest(data_req))
+        data_req_count = len(db_datarequests)
+
 
     result = {
-        'count': len(db_datarequests),
+        'count': data_req_count,
         'facets': {},
         'result': datarequests
     }

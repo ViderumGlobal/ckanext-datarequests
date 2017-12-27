@@ -106,7 +106,6 @@ class DataRequestsUI(base.BaseController):
 
             params = list()
             params.extend(toolkit.request.params.items())
-
             if params:
                 for i in range(len(params)):
                     if 'page' in params[i]:
@@ -115,7 +114,6 @@ class DataRequestsUI(base.BaseController):
                         params.append(('page', page))
             else:
                 params.append(('page', page))
-
             params = list(set(params))
             return url_func(params)
 
@@ -126,10 +124,10 @@ class DataRequestsUI(base.BaseController):
             offset = (page - 1) * constants.DATAREQUESTS_PER_PAGE
             data_dict = {'offset': offset, 'limit': limit}
 
-            state = request.GET.get('state', None)
-            if state:
-                data_dict['closed'] = True if state == 'closed' else False
-
+            # state = request.GET.get('state', None)
+            # if state:
+            #     data_dict['closed'] = True if state == 'closed' else False
+            # data_dict['closed'] = False
             is_sysadmin = authz.is_sysadmin(c.user)
             if is_sysadmin:
                 visibility = request.GET.get('visibility', None)
@@ -147,10 +145,6 @@ class DataRequestsUI(base.BaseController):
             tk.check_access(constants.DATAREQUEST_INDEX, context, data_dict)
             datarequests_list = tk.get_action(constants.DATAREQUEST_INDEX)(context, data_dict)
             c.datarequest_count = datarequests_list['count']
-            status_filter = [s[1] for s in request.GET.items() if s[0] == 'state']
-            if status_filter:
-                datarequests_list['result'] = [res for res in datarequests_list['result'] if res['status'] in status_filter]
-
             c.datarequests = datarequests_list['result']
             c.search_facets = datarequests_list['facets']
 
