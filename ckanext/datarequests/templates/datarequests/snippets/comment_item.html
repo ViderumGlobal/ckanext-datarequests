@@ -5,6 +5,9 @@
     <a name="comment_focus"></a>
 {% endif %}
 
+{% if not comment.user %}
+  {% do comment.update({'user': {'display_name': _('User'), 'name': comment.user_id}}) %}
+{% endif %}
 <div class="comment-wrapper">
   <a href="{{ h.url_for(controller='user', action='read', id=comment.user.get('name')) }}"
     class="comment-avatar">
