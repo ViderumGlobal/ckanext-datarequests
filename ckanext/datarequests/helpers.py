@@ -51,5 +51,3 @@ def get_available_organizations_all():
     context = {'model': model, 'session': model.Session, 'user': tk.c.user}                                                                   
     data_dict = {}                                                                                                                            
     return tk.get_action('organization_list')(context,data_dict)
-    #return logic.get_action('organization_show')(context,data_dict)                                                                          
-    #return logic.get_action('organization_list_for_user')(context, {'permission':'read'})
