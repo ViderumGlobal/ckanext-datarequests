@@ -155,12 +155,8 @@ def datarequest_create(context, data_dict):
 
     # If org name is passed instead of id, get the id of the organization
     org_id = tk.get_action('organization_show')(context, {'id':data_dict['organization_id']})      
-    logging.error(data_dict)
-    logging.error('************')
     data_dict['organization_id'] = org_id['id']             
     
-    logging.error(data_dict)
-
     # Validate data
     validator.validate_datarequest(context, data_dict)
 
