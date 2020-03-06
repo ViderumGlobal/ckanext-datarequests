@@ -130,13 +130,17 @@ def _get_datarequest_involved_users(context, datarequest_dict):
     users = set()
     users.add(datarequest_dict['user_id'])
     users.update([comment['user_id'] for comment in datarequest_comment_list(new_context, {'datarequest_id': datarequest_id})])
-
+    
+    user_info = []
+    
     if datarequest_dict['organization']:
-        users.update([user['name'] for user in datarequest_dict['organization']['users']])
-
+        for user in datarequest_dict['organization']['users']:                                                                 
+            user_info.append(tk.get_action('user_show')(context,{'id':user['name']}))
+        users.update([userid['id'] for userid in user_info]) 
+    
     # Notifications are not sent to the user that performs the action
-    users.discard(context['auth_user_obj'].id)
-    logging.error(users)
+    users.discard(context['auth_user_obj'].id) 
+    
     return users
 
 
