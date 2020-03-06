@@ -16,8 +16,8 @@
 
 # You should have received a copy of the GNU Affero General Public License
 # along with CKAN Data Requests Extension. If not, see <http://www.gnu.org/licenses/>.
-
-
+import ckan.lib.base as base
+import ckan.model as model
 import ckan.plugins as plugins
 import constants
 import datetime
@@ -25,6 +25,9 @@ import cgi
 import db
 import logging
 import validator
+import ckan.lib.mailer as mailer
+from pylons import config
+
 
 c = plugins.toolkit.c
 log = logging.getLogger(__name__)
@@ -118,6 +121,46 @@ def _undictize_comment_basic(comment, data_dict):
     comment.comment = cgi.escape(data_dict.get('comment', ''))
     comment.datarequest_id = data_dict.get('datarequest_id', '')
 
+def _get_datarequest_involved_users(context, datarequest_dict):
+    
+    datarequest_id = datarequest_dict['id']
+    new_context = {'ignore_auth': True, 'model': context['model'] }
+
+    # Creator + Followers + People who has commented + Organization Staff
+    users = set()
+    users.add(datarequest_dict['user_id'])
+    users.update([comment['user_id'] for comment in datarequest_comment_list(new_context, {'datarequest_id': datarequest_id})])
+
+    if datarequest_dict['organization']:
+        users.update([user['id'] for user in datarequest_dict['organization']['users']])
+
+    # Notifications are not sent to the user that performs the action
+    users.discard(context['auth_user_obj'].id)
+    logging.error(users)
+    return users
+
+
+def _send_mail(user_ids, action_type, datarequest):
+
+    for user_id in user_ids:
+        try:
+            user_data = model.User.get(user_id)
+            extra_vars = {
+                'datarequest': datarequest,
+                'user': user_data,
+                'site_title': config.get('ckan.site_title'),
+                'site_url': config.get('ckan.site_url')
+            }
+
+            subject = base.render_jinja2('emails/subjects/{0}.txt'.format(action_type), extra_vars)
+            body = base.render_jinja2('emails/bodies/{0}.txt'.format(action_type), extra_vars)
+
+            mailer.mail_user(user_data, subject, body)
+
+        except Exception:
+            logging.exception("Error sending notification to {0}".format(user_id))
+
+
 
 def datarequest_create(context, data_dict):
     '''
@@ -169,8 +212,14 @@ def datarequest_create(context, data_dict):
     session.add(data_req)
     session.commit()
 
-    return _dictize_datarequest(data_req)
+    datarequest_dict = _dictize_datarequest(data_req)
 
+    if datarequest_dict['organization']:
+        users = set([user['id'] for user in datarequest_dict['organization']['users']])
+        users.discard(context['auth_user_obj'].id)
+        _send_mail(users, 'new_datarequest', datarequest_dict)
+
+    return datarequest_dict
 
 def datarequest_show(context, data_dict):
     '''
@@ -510,8 +559,13 @@ def datarequest_close(context, data_dict):
     session.add(data_req)
     session.commit()
 
-    return _dictize_datarequest(data_req)
+    datarequest_dict = _dictize_datarequest(data_req)
 
+    # Mailing
+    users = _get_datarequest_involved_users(context, datarequest_dict)
+    _send_mail(users, 'close_datarequest', datarequest_dict)
+
+    return datarequest_dict
 
 def datarequest_comment(context, data_dict):
     '''
@@ -546,7 +600,7 @@ def datarequest_comment(context, data_dict):
     tk.check_access(constants.DATAREQUEST_COMMENT, context, data_dict)
 
     # Validate comment
-    validator.validate_comment(context, data_dict)
+    datarequest_dict = validator.validate_comment(context, data_dict)
 
     # Store the data
     comment = db.Comment()
@@ -557,8 +611,11 @@ def datarequest_comment(context, data_dict):
     session.add(comment)
     session.commit()
 
-    return _dictize_comment(comment)
+    # Mailing
+    users = _get_datarequest_involved_users(context, datarequest_dict)
+    _send_mail(users, 'new_comment', datarequest_dict)
 
+    return _dictize_comment(comment)
 
 def datarequest_comment_show(context, data_dict):
     '''
