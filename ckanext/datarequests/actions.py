@@ -316,6 +316,10 @@ def datarequest_update(context, data_dict):
     # Avoid the validator to return an error when the user does not change the title
     context['avoid_existing_title_check'] = data_req.title == data_dict['title']
 
+    # If org name is passed instead of id, get the id of the organization
+    org_id = tk.get_action('organization_show')(context, {'id':data_dict['organization_id']})      
+    data_dict['organization_id'] = org_id['id']            
+
     # Validate data
     validator.validate_datarequest(context, data_dict)
 
